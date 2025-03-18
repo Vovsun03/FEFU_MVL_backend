@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ProjectGroup;
+use App\Entity\Project;
 use App\Form\GroupType;
 use App\Repository\ProjectGroupRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -43,7 +44,23 @@ final class GroupController extends AbstractController
     #[Route('/groups', name: 'group_list', methods: ['GET'])]
     public function list(ProjectGroupRepository $projectGroupRepository): JsonResponse
     {
-        return $this->json(['data' => $projectGroupRepository->findAll()]);
+        $projectGroups = $projectGroupRepository->findAll();
+        $data = array_map(function (ProjectGroup $projectGroup) {
+            return [
+                'id' => $projectGroup->getId(),
+                'name' => $projectGroup->getName(),
+                'createdAt' => $projectGroup->getCreatedAt(),
+                'updatedAt' => $projectGroup->getUpdatedAt(),
+                'projects' => array_map(function (Project $project) {
+                    return [
+                        'id' => $project->getId(),
+                        'name' => $project->getName(),
+                    ];
+                }, $projectGroup->getProjects()->toArray()),
+            ];
+        }, $projectGroups);
+    
+        return $this->json(['data' => $data]);
     }
 
     #[Route('/groups/{id}', name: 'group_update', methods: ['PATCH'])]

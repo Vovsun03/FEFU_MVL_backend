@@ -43,7 +43,21 @@ final class TaskController extends AbstractController
     #[Route('/tasks', name: 'task_list', methods: ['GET'])]
     public function list(TaskRepository $taskRepository): JsonResponse
     {
-        return $this->json(['data' => $taskRepository->findAll()]);
+        $tasks = $taskRepository->findAll();
+        $data = array_map(function (Task $task) {
+            return [
+                'id' => $task->getId(),
+                'name' => $task->getName(),
+                'createdAt' => $task->getCreatedAt(),
+                'updatedAt' => $task->getUpdatedAt(),
+                'project' => [
+                    'id' => $task->getProject()->getId(),
+                    'name' => $task->getProject()->getName(),
+                ],
+            ];
+        }, $tasks);
+    
+        return $this->json(['data' => $data]);
     }
 
     #[Route('/tasks/{id}', name: 'task_update', methods: ['PATCH'])]

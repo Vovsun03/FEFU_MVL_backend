@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Project;
+use App\Entity\Task;
 use App\Form\ProjectType;
 use App\Repository\ProjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -43,7 +44,27 @@ final class ProjectController extends AbstractController
     #[Route('/projects', name: 'project_list', methods: ['GET'])]
     public function list(ProjectRepository $projectRepository): JsonResponse
     {
-        return $this->json(['data' => $projectRepository->findAll()]);
+        $projects = $projectRepository->findAll();
+        $data = array_map(function (Project $project) {
+            return [
+                'id' => $project->getId(),
+                'name' => $project->getName(),
+                'createdAt' => $project->getCreatedAt(),
+                'updatedAt' => $project->getUpdatedAt(),
+                'projectGroup' => [
+                    'id' => $project->getProjectGroup()->getId(),
+                    'name' => $project->getProjectGroup()->getName(),
+                ],
+                'tasks' => array_map(function (Task $task) {
+                    return [
+                        'id' => $task->getId(),
+                        'name' => $task->getName(),
+                    ];
+                }, $project->getTasks()->toArray()),
+            ];
+        }, $projects);
+    
+        return $this->json(['data' => $data]);
     }
 
     #[Route('/projects/{id}', name: 'project_update', methods: ['PATCH'])]
