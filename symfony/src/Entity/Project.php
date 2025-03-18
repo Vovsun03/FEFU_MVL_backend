@@ -8,6 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 class Project
@@ -29,10 +31,18 @@ class Project
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
+    #[ORM\ManyToOne(targetEntity: ProjectGroup::class, inversedBy: "projects")]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?ProjectGroup $projectGroup = null;
+
+    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: "project", cascade: ["remove"], orphanRemoval: true)]
+    private Collection $tasks;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+        $this->tasks = new ArrayCollection();
     }
 
     public function getId(): ?Uuid
@@ -73,6 +83,41 @@ class Project
     {
         $this->updatedAt = $updatedAt;
 
+        return $this;
+    }
+
+    public function getProjectGroup(): ?ProjectGroup
+    {
+        return $this->projectGroup;
+    }
+
+    public function setProjectGroup(?ProjectGroup $projectGroup): self
+    {
+        $this->projectGroup = $projectGroup;
+        return $this;
+    }
+
+    public function getTasks(): Collection
+    {
+        return $this->tasks;
+    }
+
+    public function addTask(Task $task): self
+    {
+        if (!$this->tasks->contains($task)) {
+            $this->tasks[] = $task;
+            $task->setProject($this);
+        }
+        return $this;
+    }
+
+    public function removeTask(Task $task): self
+    {
+        if ($this->tasks->removeElement($task)) {
+            if ($task->getProject() === $this) {
+                $task->setProject(null);
+            }
+        }
         return $this;
     }
 }

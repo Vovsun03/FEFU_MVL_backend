@@ -13,16 +13,18 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $group = new ProjectGroup();
-        $group->setName('Группа проектов 1');
+        $group->setName('Group 1');
         $manager->persist($group);
 
         $project = new Project();
-        $project->setName('Проект 1');
+        $project->setName('Project 1');
+        $project->setProjectGroup($group);
         $manager->persist($project);
 
         $task = new Task();
-        $task->setName('Задача 1');
-        $task->setDescription('Описание задачи 1');
+        $task->setName('Task 1');
+        $task->setDescription('Description for Task 1');
+        $task->setProject($project);
         $manager->persist($task);
 
         $manager->flush();
