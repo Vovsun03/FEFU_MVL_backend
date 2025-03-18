@@ -8,6 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: ProjectGroupRepository::class)]
 class ProjectGroup
@@ -29,10 +31,14 @@ class ProjectGroup
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
+    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: "projectGroup", cascade: ["remove"], orphanRemoval: true)]
+    private Collection $projects;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+        $this->projects = new ArrayCollection();
     }
 
     public function getId(): ?Uuid
@@ -73,6 +79,30 @@ class ProjectGroup
     {
         $this->updatedAt = $updatedAt;
 
+        return $this;
+    }
+
+    public function getProjects(): Collection
+    {
+        return $this->projects;
+    }
+
+    public function addProject(Project $project): self
+    {
+        if (!$this->projects->contains($project)) {
+            $this->projects[] = $project;
+            $project->setProjectGroup($this);
+        }
+        return $this;
+    }
+
+    public function removeProject(Project $project): self
+    {
+        if ($this->projects->removeElement($project)) {
+            if ($project->getProjectGroup() === $this) {
+                $project->setProjectGroup(null);
+            }
+        }
         return $this;
     }
 }
